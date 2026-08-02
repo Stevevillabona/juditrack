@@ -50,6 +50,7 @@ REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 # Es un límite global compartido, no por usuario.
 SOURCE_RATE_LIMITS = {
     "rama_judicial": {"max_concurrent": 2, "min_seconds_between_requests": 3},
+    "tyba": {"max_concurrent": 2, "min_seconds_between_requests": 3},
     "samai": {"max_concurrent": 1, "min_seconds_between_requests": 5},
     "spoa": {"max_concurrent": 1, "min_seconds_between_requests": 5},
     "superfinanciera": {"max_concurrent": 2, "min_seconds_between_requests": 3},

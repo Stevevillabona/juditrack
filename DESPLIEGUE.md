@@ -1,4 +1,11 @@
-# Cómo publicar JudiTrack sin instalar nada — solo con el navegador
+# Cómo publicar JudiTrack sin instalar nada — solo con el navegador (versión de pago, Render)
+
+> ⚠️ **Nota:** terminamos usando la versión 100% gratuita en su lugar — ver
+> `DESPLIEGUE_GRATIS.md`. El código del frontend en este repo ya está
+> conectado a esa arquitectura (Supabase), así que esta guía de Render
+> queda aquí solo como referencia si en el futuro prefieres pasarte a la
+> versión de pago (más rápida/en tiempo real). Si es tu caso, avísame y
+> te dejo el frontend re-adaptado a este otro camino.
 
 Hay **un solo paso manual inevitable**: subir el código a GitHub (nadie
 puede hacerlo por ti, alguien tiene que "hostear" el código antes de que

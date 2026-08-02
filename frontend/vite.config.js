@@ -2,7 +2,10 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
+const basePath = process.env.VITE_BASE_PATH || "/";
+
 export default defineConfig({
+  base: basePath,
   plugins: [
     react(),
     VitePWA({
@@ -15,19 +18,20 @@ export default defineConfig({
         theme_color: "#12213B",
         background_color: "#F6F3EC",
         display: "standalone",
-        start_url: "/",
+        start_url: basePath,
+        scope: basePath,
         icons: [
           { src: "icon-192.png", sizes: "192x192", type: "image/png" },
           { src: "icon-512.png", sizes: "512x512", type: "image/png" },
         ],
       },
       workbox: {
-        // Las llamadas a /api/* nunca se cachean: el usuario siempre debe
-        // ver el estado real de sus procesos, nunca una versión vieja
-        // servida offline como si fuera actual.
+        // Las llamadas a Supabase (API/Auth) nunca se cachean: el usuario
+        // siempre debe ver el estado real de sus procesos, nunca una
+        // versión vieja servida offline como si fuera actual.
         runtimeCaching: [
           {
-            urlPattern: /\/api\//,
+            urlPattern: /supabase\.co\//,
             handler: "NetworkOnly",
           },
         ],
@@ -36,8 +40,5 @@ export default defineConfig({
   ],
   server: {
     host: "0.0.0.0",
-    proxy: {
-      "/api": process.env.VITE_API_PROXY_TARGET || "http://localhost:8000",
-    },
   },
 });

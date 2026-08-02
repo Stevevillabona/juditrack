@@ -64,6 +64,7 @@ a { color: inherit; }
   position: sticky;
   top: 0;
   z-index: 10;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15), 0 4px 12px rgba(18, 33, 59, 0.18);
 }
 
 .topbar-brand {
@@ -72,9 +73,25 @@ a { color: inherit; }
   font-size: 19px;
   letter-spacing: 0.01em;
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
 }
+
+.topbar-brand .sello {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ocre);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--parchment);
+  flex-shrink: 0;
+}
+
+.topbar-brand .marca-texto { display: flex; align-items: baseline; gap: 8px; }
 
 .topbar-brand .marca-radicado {
   font-family: var(--mono);
@@ -167,10 +184,14 @@ a { color: inherit; }
   padding: 16px 18px;
   margin-bottom: 10px;
   cursor: pointer;
-  transition: border-color 0.12s ease, transform 0.08s ease;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  box-shadow: 0 1px 2px rgba(18, 33, 59, 0.04);
 }
 
-.tarjeta-proceso:hover { border-color: var(--ink); }
+.tarjeta-proceso:hover {
+  border-color: var(--ink);
+  box-shadow: 0 4px 14px rgba(18, 33, 59, 0.09);
+}
 
 .tarjeta-proceso-top {
   display: flex;
@@ -261,7 +282,167 @@ a { color: inherit; }
 
 .actuacion-anotacion { font-size: 14.5px; line-height: 1.55; }
 
-/* --- Estados vacíos / error --- */
+/* --- Barra de navegación secundaria (estilo Icarus) --- */
+
+.subnav {
+  background: var(--parchment-raised);
+  border-bottom: 1px solid var(--hairline);
+  padding: 0 20px;
+  display: flex;
+  gap: 22px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.subnav button {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 11px 2px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--pizarra);
+  cursor: pointer;
+}
+
+.subnav button.activo {
+  color: var(--ink);
+  border-bottom-color: var(--ocre);
+  font-weight: 600;
+}
+
+/* --- Barra de herramientas de la tabla --- */
+
+.tabla-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  background: var(--parchment-raised);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.tabla-toolbar input[type="search"] {
+  flex: 1;
+  min-width: 180px;
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  padding: 8px 10px;
+  background: var(--parchment);
+  font-size: 13.5px;
+}
+
+.tabla-toolbar select {
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  padding: 8px 10px;
+  background: var(--parchment);
+  font-size: 13.5px;
+}
+
+.toolbar-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--pizarra);
+  white-space: nowrap;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--hairline);
+}
+
+.leyenda-verde {
+  font-size: 12.5px;
+  color: var(--pizarra);
+  padding: 8px 2px 14px;
+}
+
+.leyenda-verde b { color: var(--ink); }
+
+/* --- Tabla de procesos --- */
+
+.tabla-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background: var(--parchment-raised);
+  box-shadow: 0 1px 3px rgba(18, 33, 59, 0.05);
+}
+
+table.tabla-procesos {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  min-width: 920px;
+}
+
+table.tabla-procesos thead th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pizarra);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--hairline);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  background: var(--parchment-raised);
+}
+
+table.tabla-procesos tbody tr {
+  border-bottom: 1px solid var(--hairline);
+  cursor: pointer;
+}
+
+table.tabla-procesos tbody tr:hover { background: var(--ocre-soft); }
+
+table.tabla-procesos tbody tr.fila-novedad { background: var(--verde-ok-soft); }
+table.tabla-procesos tbody tr.fila-novedad:hover { background: #dcebdc; }
+
+table.tabla-procesos td {
+  padding: 10px 12px;
+  vertical-align: top;
+}
+
+table.tabla-procesos td.col-radicado {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+table.tabla-procesos td.col-alias {
+  font-family: var(--serif);
+  font-weight: 600;
+  max-width: 220px;
+}
+
+table.tabla-procesos td.col-estado { white-space: nowrap; }
+
+.indicador-estado {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.indicador-estado.novedad { background: var(--verde-ok); }
+.indicador-estado.pausado { background: var(--pizarra); }
+.indicador-estado.al-dia { background: var(--hairline); color: var(--pizarra); }
 
 .estado-vacio {
   text-align: center;
@@ -328,6 +509,7 @@ a { color: inherit; }
   border: 1px solid var(--hairline);
   border-radius: 6px;
   padding: 32px 28px;
+  box-shadow: 0 8px 30px rgba(18, 33, 59, 0.1);
 }
 
 .login-card .titulo {

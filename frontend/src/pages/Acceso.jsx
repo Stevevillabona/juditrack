@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { api, setToken } from "../lib/api.js";
+import { api } from "../lib/api.js";
 
 export default function Acceso({ onAutenticado }) {
   const [modo, setModo] = useState("login"); // 'login' | 'registro'
   const [form, setForm] = useState({ email: "", password: "", codigo_2fa: "", nombre_firma: "", nombre_usuario: "" });
   const [pidiendo2fa, setPidiendo2fa] = useState(false);
   const [error, setError] = useState("");
+  const [mensaje, setMensaje] = useState("");
   const [cargando, setCargando] = useState(false);
 
   function actualizar(campo, valor) {
@@ -17,12 +18,11 @@ export default function Acceso({ onAutenticado }) {
     setError("");
     setCargando(true);
     try {
-      const resp = await api.login({
+      await api.login({
         email: form.email,
         password: form.password,
         codigo_2fa: form.codigo_2fa || undefined,
       });
-      setToken(resp.access_token);
       onAutenticado();
     } catch (err) {
       if (err.message.toLowerCase().includes("dos pasos")) {
@@ -38,6 +38,7 @@ export default function Acceso({ onAutenticado }) {
   async function enviarRegistro(e) {
     e.preventDefault();
     setError("");
+    setMensaje("");
     setCargando(true);
     try {
       const resp = await api.registro({
@@ -46,8 +47,12 @@ export default function Acceso({ onAutenticado }) {
         email: form.email,
         password: form.password,
       });
-      setToken(resp.access_token);
-      onAutenticado();
+      if (resp.session) {
+        onAutenticado();
+      } else {
+        setMensaje("Cuenta creada. Revisa tu correo y confirma tu cuenta antes de ingresar.");
+        setModo("login");
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -58,12 +63,20 @@ export default function Acceso({ onAutenticado }) {
   return (
     <div className="login-wrap">
       <div className="login-card">
-        <p className="titulo">JudiTrack</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+          <span className="sello" style={{ borderColor: "var(--ocre)", color: "var(--ink)", background: "var(--ink)" }}>J</span>
+          <p className="titulo" style={{ margin: 0 }}>JudiTrack</p>
+        </div>
         <p className="subtitulo">
           {modo === "login" ? "Ingresa a tu cuenta." : "Crea la cuenta de tu firma."}
         </p>
 
         {error && <div className="alerta">{error}</div>}
+        {mensaje && (
+          <div className="alerta" style={{ borderColor: "var(--verde-ok)", background: "var(--verde-ok-soft)", color: "var(--verde-ok)" }}>
+            {mensaje}
+          </div>
+        )}
 
         {modo === "login" ? (
           <form onSubmit={enviarLogin}>

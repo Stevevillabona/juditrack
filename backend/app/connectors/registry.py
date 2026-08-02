@@ -14,6 +14,7 @@ import time
 from app.config import SOURCE_RATE_LIMITS
 from app.connectors.base import ConectorFuente
 from app.connectors.rama_judicial import ConectorRamaJudicial
+from app.connectors.tyba import ConectorTyba
 
 # --- Registro de conectores activos ---
 # Para agregar SAMAI, SPOA, Superfinanciera, SIC o despachos: se construye la
@@ -21,6 +22,7 @@ from app.connectors.rama_judicial import ConectorRamaJudicial
 # una línea aquí. Nada más del sistema necesita cambiar.
 CONECTORES: dict[str, ConectorFuente] = {
     "rama_judicial": ConectorRamaJudicial(),
+    "tyba": ConectorTyba(),
     # "samai": ConectorSamai(),
     # "spoa": ConectorSpoa(),
     # "superfinanciera": ConectorSuperfinanciera(),

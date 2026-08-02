@@ -12,9 +12,8 @@ export default function ProcesoDetalle({ procesoId, onVolver }) {
   const [proceso, setProceso] = useState(null);
   const [actuaciones, setActuaciones] = useState(null);
   const [auditoria, setAuditoria] = useState(null);
-  const [pestaña, setPestaña] = useState("linea"); // linea | auditoria
+  const [pestaña, setPestaña] = useState("linea"); // linea | documentos | auditoria
   const [error, setError] = useState("");
-  const [consultando, setConsultando] = useState(false);
 
   async function cargarTodo() {
     setError("");
@@ -42,12 +41,20 @@ export default function ProcesoDetalle({ procesoId, onVolver }) {
   }, [pestaña, procesoId, auditoria]);
 
   async function consultarAhora() {
-    setConsultando(true);
-    try {
-      await api.consultarAhora(procesoId);
-    } finally {
-      setTimeout(() => setConsultando(false), 2000);
+    const info = api.urlConsultaManual(procesoId);
+    if (!info) {
+      alert("El monitoreo corre automáticamente cada 2 horas en horario hábil. No hay un link de GitHub configurado para forzar una corrida manual.");
+      return;
     }
+    try {
+      await navigator.clipboard.writeText(procesoId);
+    } catch {
+      /* portapapeles no disponible, no es crítico */
+    }
+    alert(
+      "Copié el ID de este proceso al portapapeles. Se va a abrir la pestaña de GitHub Actions: haz clic en 'Run workflow', pega el ID en el campo 'proceso_id', y dale a 'Run workflow' otra vez."
+    );
+    window.open(info.url, "_blank");
   }
 
   async function alternarPausa() {
@@ -77,8 +84,8 @@ export default function ProcesoDetalle({ procesoId, onVolver }) {
           <div className="radicado" style={{ marginTop: 4 }}>{proceso.radicado}</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn btn-outline" onClick={consultarAhora} disabled={consultando}>
-            {consultando ? "Consultando…" : "Consultar ahora"}
+          <button className="btn btn-outline" onClick={consultarAhora}>
+            Forzar consulta (vía GitHub)
           </button>
           <button className="btn btn-outline" onClick={alternarPausa}>
             {proceso.activo ? "Pausar" : "Reanudar"}
@@ -90,6 +97,9 @@ export default function ProcesoDetalle({ procesoId, onVolver }) {
       <div className="filtros">
         <button className={`filtro-chip ${pestaña === "linea" ? "activo" : ""}`} onClick={() => setPestaña("linea")}>
           Línea de tiempo
+        </button>
+        <button className={`filtro-chip ${pestaña === "documentos" ? "activo" : ""}`} onClick={() => setPestaña("documentos")}>
+          Documentos {actuaciones.filter((a) => a.documento_url).length > 0 && `(${actuaciones.filter((a) => a.documento_url).length})`}
         </button>
         <button className={`filtro-chip ${pestaña === "auditoria" ? "activo" : ""}`} onClick={() => setPestaña("auditoria")}>
           Auditoría de consultas
@@ -121,9 +131,51 @@ export default function ProcesoDetalle({ procesoId, onVolver }) {
             ))}
           </div>
         )
+      ) : pestaña === "documentos" ? (
+        <ListaDocumentos actuaciones={actuaciones} />
       ) : (
         <TablaAuditoria auditoria={auditoria} />
       )}
+    </div>
+  );
+}
+
+function ListaDocumentos({ actuaciones }) {
+  const conDocumento = actuaciones.filter((a) => a.documento_url);
+
+  if (conDocumento.length === 0) {
+    return (
+      <div className="estado-vacio">
+        <h2>No hay documentos disponibles todavía</h2>
+        <p>
+          Algunas fuentes (como TYBA) publican piezas procesales descargables; en cuanto la fuente
+          exponga un documento para una actuación, aparecerá aquí.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {[...conDocumento].reverse().map((a) => (
+        <a
+          key={a.id}
+          href={a.documento_url}
+          target="_blank"
+          rel="noreferrer"
+          className="tarjeta-proceso"
+          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", textDecoration: "none" }}
+        >
+          <div>
+            <span className="actuacion-tipo">{a.tipo}</span>
+            <p style={{ margin: "6px 0 0", fontSize: 14, color: "var(--ink)" }}>{a.anotacion.slice(0, 140)}</p>
+            <p className="actuacion-fecha" style={{ marginTop: 4 }}>
+              {new Date(a.fecha_actuacion).toLocaleDateString("es-CO")}
+            </p>
+          </div>
+          <span style={{ fontSize: 13, whiteSpace: "nowrap", marginLeft: 12 }}>Descargar →</span>
+        </a>
+      ))}
     </div>
   );
 }

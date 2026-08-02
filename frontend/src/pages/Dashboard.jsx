@@ -1,22 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api.js";
 
 const FUENTES = [
   { value: "rama_judicial", label: "Rama Judicial (CPNU)" },
+  { value: "tyba", label: "TYBA (Justicia XXI Web)" },
   { value: "samai", label: "SAMAI — Consejo de Estado (próximamente)" },
   { value: "spoa", label: "SPOA — Fiscalía (próximamente)" },
 ];
 
-export default function Dashboard({ onAbrirProceso }) {
+export default function Dashboard({ archivado = false, onAbrirProceso }) {
   const [procesos, setProcesos] = useState(null);
-  const [filtro, setFiltro] = useState("todos"); // todos | con_novedades
+  const [soloNovedades, setSoloNovedades] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
   const [error, setError] = useState("");
   const [mostrarForm, setMostrarForm] = useState(false);
 
   async function cargar() {
     setError("");
     try {
-      const params = filtro === "con_novedades" ? { con_novedades: "true" } : {};
+      const params = { archivado };
+      if (soloNovedades) params.con_novedades = "true";
       const data = await api.listarProcesos(params);
       setProcesos(data);
     } catch (err) {
@@ -29,7 +32,43 @@ export default function Dashboard({ onAbrirProceso }) {
     const intervalo = setInterval(cargar, 60_000); // refresco pasivo, no dispara consultas nuevas
     return () => clearInterval(intervalo);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtro]);
+  }, [soloNovedades, archivado]);
+
+  const filtrados = useMemo(() => {
+    if (!procesos) return null;
+    const q = busqueda.trim().toLowerCase();
+    if (!q) return procesos;
+    return procesos.filter(
+      (p) =>
+        p.radicado.includes(q) ||
+        (p.alias || "").toLowerCase().includes(q) ||
+        (p.cliente || "").toLowerCase().includes(q)
+    );
+  }, [procesos, busqueda]);
+
+  function exportarCsv() {
+    if (!filtrados || filtrados.length === 0) return;
+    const filas = [
+      ["Radicado", "Alias", "Cliente", "Jurisdicción", "Última actuación", "Anotación", "Fecha"],
+      ...filtrados.map((p) => [
+        p.radicado,
+        p.alias || "",
+        p.cliente || "",
+        p.jurisdiccion || "",
+        p.ultima_actuacion?.tipo || "",
+        (p.ultima_actuacion?.anotacion || "").replace(/[\n,]/g, " "),
+        p.ultima_actuacion?.fecha ? new Date(p.ultima_actuacion.fecha).toLocaleDateString("es-CO") : "",
+      ]),
+    ];
+    const csv = filas.map((f) => f.map((c) => `"${c}"`).join(",")).join("\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "procesos.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <div>
@@ -44,51 +83,81 @@ export default function Dashboard({ onAbrirProceso }) {
 
       {mostrarForm && <FormularioNuevoProceso onCreado={() => { setMostrarForm(false); cargar(); }} />}
 
-      <div className="filtros">
-        <button
-          className={`filtro-chip ${filtro === "todos" ? "activo" : ""}`}
-          onClick={() => setFiltro("todos")}
-        >
-          Todos
-        </button>
-        <button
-          className={`filtro-chip ${filtro === "con_novedades" ? "activo" : ""}`}
-          onClick={() => setFiltro("con_novedades")}
-        >
-          Con novedades
-        </button>
+      <div className="tabla-toolbar">
+        <input
+          type="search"
+          placeholder="Buscar por radicado, alias o cliente…"
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+        />
+        <label className="toolbar-check">
+          <input type="checkbox" checked={soloNovedades} onChange={(e) => setSoloNovedades(e.target.checked)} />
+          Solo con novedades
+        </label>
+        <div className="toolbar-divider" />
+        <button className="btn btn-outline" onClick={exportarCsv}>Exportar a CSV</button>
       </div>
 
-      {procesos === null ? (
+      <div className="leyenda-verde">
+        Las filas en <b>verde</b> tienen actuaciones nuevas desde la última vez que las revisaste.
+      </div>
+
+      {filtrados === null ? (
         <p style={{ color: "var(--pizarra)" }}>Cargando…</p>
-      ) : procesos.length === 0 ? (
+      ) : filtrados.length === 0 ? (
         <div className="estado-vacio">
-          <h2>Todavía no hay procesos aquí</h2>
+          <h2>No hay procesos que coincidan</h2>
           <p>Añade un radicado de 23 dígitos para empezar a monitorearlo automáticamente.</p>
         </div>
       ) : (
-        procesos.map((p) => (
-          <button key={p.id} className="tarjeta-proceso" onClick={() => onAbrirProceso(p.id)}>
-            <div className="tarjeta-proceso-top">
-              <div>
-                <h3>{p.alias || "Proceso sin alias"}</h3>
-                <div className="radicado">{p.radicado}</div>
-              </div>
-              {p.tiene_novedades ? (
-                <span className="badge badge-novedad">Novedad</span>
-              ) : !p.activo ? (
-                <span className="badge badge-pausado">Pausado</span>
-              ) : (
-                <span className="badge badge-al-dia">Al día</span>
-              )}
-            </div>
-            <div className="meta">
-              {p.cliente && <>Cliente: {p.cliente} · </>}
-              {p.jurisdiccion && <>{p.jurisdiccion} · </>}
-              Fuente: {FUENTES.find((f) => f.value === p.fuente)?.label || p.fuente}
-            </div>
-          </button>
-        ))
+        <div className="tabla-scroll">
+          <table className="tabla-procesos">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Radicado</th>
+                <th>Alias / Cliente</th>
+                <th>Última actuación</th>
+                <th>Anotación</th>
+                <th>Fecha</th>
+                <th>Fuente</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtrados.map((p) => (
+                <tr
+                  key={p.id}
+                  className={p.tiene_novedades ? "fila-novedad" : ""}
+                  onClick={() => onAbrirProceso(p.id)}
+                >
+                  <td>
+                    <span
+                      className={`indicador-estado ${
+                        p.tiene_novedades ? "novedad" : !p.activo ? "pausado" : "al-dia"
+                      }`}
+                      title={p.tiene_novedades ? "Con novedad" : !p.activo ? "Pausado" : "Al día"}
+                    >
+                      {p.tiene_novedades ? "!" : !p.activo ? "❚❚" : "✓"}
+                    </span>
+                  </td>
+                  <td className="col-radicado">{p.radicado}</td>
+                  <td className="col-alias">
+                    {p.alias || "Sin alias"}
+                    {p.cliente && <div style={{ fontWeight: 400, fontSize: 12.5, color: "var(--pizarra)" }}>{p.cliente}</div>}
+                  </td>
+                  <td>{p.ultima_actuacion?.tipo || "—"}</td>
+                  <td style={{ maxWidth: 320 }}>
+                    {p.ultima_actuacion?.anotacion ? p.ultima_actuacion.anotacion.slice(0, 140) : "—"}
+                  </td>
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    {p.ultima_actuacion?.fecha ? new Date(p.ultima_actuacion.fecha).toLocaleDateString("es-CO") : "—"}
+                  </td>
+                  <td>{FUENTES.find((f) => f.value === p.fuente)?.label.split(" (")[0] || p.fuente}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
@@ -159,7 +228,7 @@ function FormularioNuevoProceso({ onCreado }) {
           <label>Fuente</label>
           <select value={fuente} onChange={(e) => setFuente(e.target.value)}>
             {FUENTES.map((f) => (
-              <option key={f.value} value={f.value} disabled={f.value !== "rama_judicial"}>
+              <option key={f.value} value={f.value} disabled={f.value === "samai" || f.value === "spoa"}>
                 {f.label}
               </option>
             ))}
