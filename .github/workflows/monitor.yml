@@ -1,0 +1,42 @@
+name: Monitoreo de procesos
+
+on:
+  schedule:
+    # Cada 2 horas, todos los días. Como 12:00 UTC (7am hora Colombia)
+    # es una de esas horas, la corrida de las 7am queda incluida sola.
+    - cron: "0 */2 * * *"
+  workflow_dispatch:
+    inputs:
+      proceso_id:
+        description: "ID de un proceso puntual a forzar (vacío = todos los activos)"
+        required: false
+        default: ""
+  repository_dispatch:
+    types: [nuevo_proceso]
+
+jobs:
+  monitorear:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r scripts/requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Correr el monitoreo
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          PROCESO_ID: ${{ github.event.inputs.proceso_id || github.event.client_payload.proceso_id || '' }}
+        run: python scripts/monitor.py
