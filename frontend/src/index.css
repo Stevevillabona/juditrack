@@ -1,0 +1,358 @@
+/* Sistema de diseño JudiTrack
+   Paleta: tinta de despacho, no plantilla SaaS genérica.
+   - #12213B  ink      — encabezados, navegación, texto de máxima jerarquía
+   - #F6F3EC  parchment — fondo, evoca papel de expediente
+   - #8C2F39  lacre     — acento de alerta/novedad (color de sello de lacre)
+   - #B08A3E  ocre      — acento de audiencias/fechas (color de sello dorado)
+   - #5B6472  pizarra   — texto secundario
+   - #D9D2C2  hairline  — bordes y divisores, tono papel envejecido
+*/
+
+:root {
+  --ink: #12213b;
+  --ink-soft: #24354f;
+  --parchment: #f6f3ec;
+  --parchment-raised: #fffdf8;
+  --lacre: #8c2f39;
+  --lacre-soft: #fbebec;
+  --ocre: #9c7530;
+  --ocre-soft: #f7efdc;
+  --pizarra: #5b6472;
+  --hairline: #d9d2c2;
+  --verde-ok: #34633f;
+  --verde-ok-soft: #e8f0e8;
+
+  --serif: "Source Serif 4", Georgia, serif;
+  --sans: "IBM Plex Sans", -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--parchment);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea { font-family: inherit; font-size: inherit; }
+
+a { color: inherit; }
+
+::selection { background: var(--ocre-soft); }
+
+:focus-visible {
+  outline: 2px solid var(--ocre);
+  outline-offset: 2px;
+}
+
+/* --- Layout general --- */
+
+.app-shell { min-height: 100%; display: flex; flex-direction: column; }
+
+.topbar {
+  background: var(--ink);
+  color: var(--parchment);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topbar-brand {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 19px;
+  letter-spacing: 0.01em;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.topbar-brand .marca-radicado {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #c9b98a;
+  letter-spacing: 0.08em;
+}
+
+.topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+.main-content {
+  flex: 1;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 28px 20px 80px;
+}
+
+/* --- Botones --- */
+
+.btn {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 3px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.btn-primary { background: var(--ink); color: var(--parchment); }
+.btn-primary:hover { background: var(--ink-soft); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--hairline);
+}
+.btn-outline:hover { border-color: var(--ink); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--parchment);
+  border-color: rgba(246, 243, 236, 0.35);
+}
+.btn-ghost:hover { border-color: var(--parchment); }
+
+.btn-danger { background: transparent; color: var(--lacre); border-color: var(--lacre); }
+
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* --- Campos de formulario --- */
+
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+
+.field label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--pizarra);
+}
+
+.field input, .field select, .field textarea {
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  padding: 11px 12px;
+  background: var(--parchment-raised);
+  color: var(--ink);
+}
+
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--ink);
+}
+
+.field.mono input { font-family: var(--mono); letter-spacing: 0.03em; }
+
+.field-error { color: var(--lacre); font-size: 13px; }
+
+/* --- Tarjeta de proceso (lista) --- */
+
+.tarjeta-proceso {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--parchment-raised);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.12s ease, transform 0.08s ease;
+}
+
+.tarjeta-proceso:hover { border-color: var(--ink); }
+
+.tarjeta-proceso-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.tarjeta-proceso h3 {
+  font-family: var(--serif);
+  font-size: 17px;
+  margin: 0 0 4px;
+}
+
+.tarjeta-proceso .radicado {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--pizarra);
+}
+
+.tarjeta-proceso .meta {
+  font-size: 13px;
+  color: var(--pizarra);
+  margin-top: 6px;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.badge-novedad { background: var(--lacre-soft); color: var(--lacre); }
+.badge-al-dia { background: var(--verde-ok-soft); color: var(--verde-ok); }
+.badge-pausado { background: #eee; color: var(--pizarra); }
+
+/* --- Línea de tiempo de actuaciones (elemento distintivo: registro/expediente) --- */
+
+.expediente {
+  position: relative;
+  padding-left: 28px;
+  border-left: 2px solid var(--hairline);
+}
+
+.actuacion {
+  position: relative;
+  padding-bottom: 26px;
+}
+
+.actuacion::before {
+  content: "";
+  position: absolute;
+  left: -34px;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--parchment-raised);
+  border: 2px solid var(--ink);
+}
+
+.actuacion.es-nueva::before { border-color: var(--lacre); background: var(--lacre); }
+
+.actuacion-fecha {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--pizarra);
+  margin-bottom: 4px;
+}
+
+.actuacion-tipo {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ocre);
+  border: 1px solid var(--ocre);
+  border-radius: 2px;
+  padding: 1px 6px;
+  margin-bottom: 6px;
+}
+
+.actuacion-anotacion { font-size: 14.5px; line-height: 1.55; }
+
+/* --- Estados vacíos / error --- */
+
+.estado-vacio {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--pizarra);
+}
+
+.estado-vacio h2 {
+  font-family: var(--serif);
+  color: var(--ink);
+  font-size: 20px;
+}
+
+.alerta {
+  border: 1px solid var(--lacre);
+  background: var(--lacre-soft);
+  color: var(--lacre);
+  border-radius: 4px;
+  padding: 12px 14px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.encabezado-seccion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.encabezado-seccion h1 {
+  font-family: var(--serif);
+  font-size: 24px;
+  margin: 0;
+}
+
+.filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+
+.filtro-chip {
+  font-size: 12.5px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--hairline);
+  background: var(--parchment-raised);
+  cursor: pointer;
+}
+
+.filtro-chip.activo { background: var(--ink); color: var(--parchment); border-color: var(--ink); }
+
+.login-wrap {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--parchment-raised);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 32px 28px;
+}
+
+.login-card .titulo {
+  font-family: var(--serif);
+  font-size: 26px;
+  margin: 0 0 4px;
+}
+
+.login-card .subtitulo {
+  color: var(--pizarra);
+  font-size: 14px;
+  margin: 0 0 24px;
+}
+
+.link-boton {
+  background: none;
+  border: none;
+  color: var(--ink);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 13.5px;
+  padding: 0;
+}
+
+@media (max-width: 640px) {
+  .main-content { padding: 20px 14px 70px; }
+  .encabezado-seccion h1 { font-size: 20px; }
+}
