@@ -112,9 +112,13 @@ class ConectorRamaJudicial(ConectorFuente):
         try:
             await page.wait_for_selector(SEL_INPUT_RADICADO, timeout=15_000)
         except PlaywrightTimeoutError:
+            diagnostico = await self._volcar_diagnostico(page)
+            print("--- DIAGNÓSTICO: no se encontró el campo de radicado ---")
+            print(diagnostico)
+            print("--- FIN DIAGNÓSTICO ---")
             return RespuestaConsulta(
                 resultado=ResultadoConsulta.FUENTE_CAMBIO_ESTRUCTURA,
-                mensaje="No se encontró el campo de radicado esperado; el portal pudo haber cambiado su HTML.",
+                mensaje="No se encontró el campo de radicado esperado; el portal pudo haber cambiado su HTML. Ver el log de la corrida en GitHub Actions para el diagnóstico completo.",
             )
 
         await page.fill(SEL_INPUT_RADICADO, radicado)
@@ -145,6 +149,41 @@ class ConectorRamaJudicial(ConectorFuente):
             metadatos=metadatos,
             actuaciones=actuaciones,
         )
+
+    async def _volcar_diagnostico(self, page: Page) -> str:
+        """Lista todos los <input>, <button> y elementos con role='button' que
+        haya realmente en la página en este momento, con sus atributos clave
+        (id, name, type, placeholder, texto). Esto es lo que nos permite
+        corregir los selectores sin tener que navegar el sitio nosotros
+        mismos: basta con leer el log de esta corrida en GitHub Actions."""
+        lineas = [f"URL actual: {page.url}", f"Título: {await page.title()}", ""]
+
+        inputs = page.locator("input")
+        n_inputs = await inputs.count()
+        lineas.append(f"Encontré {n_inputs} <input> en la página:")
+        for i in range(min(n_inputs, 40)):
+            el = inputs.nth(i)
+            attrs = {}
+            for attr in ("id", "name", "type", "placeholder", "class", "formcontrolname", "aria-label"):
+                val = await el.get_attribute(attr)
+                if val:
+                    attrs[attr] = val
+            lineas.append(f"  [{i}] {attrs}")
+
+        botones = page.locator("button")
+        n_botones = await botones.count()
+        lineas.append(f"\nEncontré {n_botones} <button> en la página:")
+        for i in range(min(n_botones, 40)):
+            el = botones.nth(i)
+            texto = (await el.inner_text()).strip().replace("\n", " ")[:60]
+            attrs = {}
+            for attr in ("id", "class", "type", "aria-label"):
+                val = await el.get_attribute(attr)
+                if val:
+                    attrs[attr] = val
+            lineas.append(f"  [{i}] texto={texto!r} {attrs}")
+
+        return "\n".join(lineas)
 
     async def _extraer_metadatos(self, page: Page) -> MetadatosProceso:
         panel = page.locator(SEL_PANEL_METADATOS)
