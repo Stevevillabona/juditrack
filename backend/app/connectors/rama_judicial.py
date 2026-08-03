@@ -38,12 +38,10 @@ URL_CONSULTA = "https://consultaprocesos.ramajudicial.gov.co/Procesos/NumeroRadi
 RADICADO_REGEX = re.compile(r"^\d{23}$")
 
 # Selectores centralizados: si el portal cambia el HTML, se ajustan aquí y
-# solo aquí. (Estos son representativos de la estructura típica de un
-# formulario Angular/Blazor de este tipo de portal gubernamental; deben
-# verificarse y ajustarse contra el DOM real antes de producción, idealmente
-# con un test de "smoke" diario que compare contra un radicado de control.)
-SEL_INPUT_RADICADO = "input#numero_radicado, input[formcontrolname='numeroRadicacion']"
-SEL_BOTON_CONSULTAR = "button:has-text('Consultar')"
+# solo aquí. (Confirmados contra el DOM real vía el diagnóstico del log de
+# GitHub Actions: la página es una app Vuetify/Vue.)
+SEL_INPUT_RADICADO = "input[placeholder='Ingrese los 23 dígitos del número de Radicación']"
+SEL_BOTON_CONSULTAR = "button[aria-label='Consultar Número de radicación']"
 SEL_TABLA_RESULTADOS = "table.table-resultados, table:has-text('Actuación')"
 SEL_FILA_ACTUACION = f"{SEL_TABLA_RESULTADOS} tbody tr"
 SEL_MENSAJE_NO_ENCONTRADO = "text=/no se encontr(ó|aron) (información|resultados)/i"
@@ -130,9 +128,16 @@ class ConectorRamaJudicial(ConectorFuente):
                 f"{SEL_TABLA_RESULTADOS}, {SEL_MENSAJE_NO_ENCONTRADO}", timeout=20_000
             )
         except PlaywrightTimeoutError:
+            diagnostico = await self._volcar_diagnostico(page)
+            texto_visible = (await page.locator("body").inner_text())[:1500]
+            print("--- DIAGNÓSTICO: no aparecieron resultados ni mensaje de 'no encontrado' ---")
+            print(diagnostico)
+            print("\nTexto visible de la página (primeros 1500 caracteres):")
+            print(texto_visible)
+            print("--- FIN DIAGNÓSTICO ---")
             return RespuestaConsulta(
                 resultado=ResultadoConsulta.ERROR_TEMPORAL,
-                mensaje="El portal no respondió con resultados ni con mensaje de error en el tiempo esperado.",
+                mensaje="El portal no respondió con resultados ni con mensaje de error en el tiempo esperado. Ver el log de GitHub Actions para el diagnóstico.",
             )
 
         if await page.locator(SEL_MENSAJE_NO_ENCONTRADO).count() > 0:
